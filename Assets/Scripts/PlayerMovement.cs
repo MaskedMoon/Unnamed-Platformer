@@ -10,21 +10,26 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _acceleration = 1f;
     [SerializeField] private float _maxSpeed = 3f;
     [SerializeField] private float _startRunningSpeed = 0.3f;
+    [SerializeField] private float _linearDrag = 5f;
     private Vector2 _moveInput;
 
     [Header("Vertical Movement")]
+    [SerializeField] private int _extraJumpCount = 2;
     [SerializeField] private float _jumpForce = 5f;
     [SerializeField] private float _gravity = 1;
     [SerializeField] private float _fallMultiplier = 5f;
-    [SerializeField] private float _linerDragMultiplier = 0.3f; 
+    [SerializeField] private float _linerDragMultiplier = 0.3f;
+    [SerializeField] private float _coyoteTimerVal = 0.2f;
+
+    private int _extraJumps;
+    private float _coyoteTimer;
+    private float? _jumpBuffer;
+   
     private int _whichInteraction; //0 == Tap, 1 == Hold
     
     [Header("Collision Detection")]
     [SerializeField] private float _feetCheckRadius;
     private bool _isGrounded;
-
-    [Header("Physics Variables")]
-    [SerializeField] private float _linearDrag = 5f;
 
     [Header("Components")]
     [SerializeField] Transform _feetpos;
@@ -36,6 +41,11 @@ public class PlayerMovement : MonoBehaviour
         _myRigidBody = GetComponent<Rigidbody2D>();
     }
 
+    private void Start() 
+    {
+        _extraJumps = _extraJumpCount;    
+    }
+
     private void FixedUpdate() 
     {
         Run(_moveInput.x);
@@ -44,6 +54,18 @@ public class PlayerMovement : MonoBehaviour
     private void Update() 
     {
         _isGrounded = Physics2D.OverlapCircle(_feetpos.position,_feetCheckRadius,_groundLayerMask);
+//        Debug.Log("Grounded: " + _isGrounded + " | Extra Jumps: " + _extraJumps);
+        if (_isGrounded)
+        {
+            //_extraJumps = _extraJumpCount;          
+            _coyoteTimer = _coyoteTimerVal;
+        }
+        else
+        {
+            _coyoteTimer -= Time.deltaTime;
+        }
+
+        
     }
  
     public void GetMoveInput(InputAction.CallbackContext context)
@@ -119,18 +141,45 @@ public class PlayerMovement : MonoBehaviour
     
     public void GetJumpInput(InputAction.CallbackContext context)
     {
-        if (_isGrounded && context.performed)
+        
+        if (context.started)
         {
+            _jumpBuffer = Time.time;
+        }
+
+        if (_coyoteTimer > 0f && (Time.time - _jumpBuffer >= 0) && context.performed && _extraJumps > 0)
+        {
+            Debug.Log("First Press: " + _extraJumps);
+            _extraJumps--;
             if(context.interaction is TapInteraction)
             {
-                _myRigidBody.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+                //_myRigidBody.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+                _myRigidBody.velocity = Vector2.up * _jumpForce;
                 _whichInteraction = 0;
             }
             else if (context.interaction is HoldInteraction)
             {
-                _myRigidBody.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+                //.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+                _myRigidBody.velocity = Vector2.up * _jumpForce;
                 _whichInteraction = 1;
             }
+            _jumpBuffer = null;
+        }
+        else if (_extraJumps > 0 && context.performed)
+        {
+            Debug.Log("Second Press: " + _extraJumps);
+            if(context.interaction is TapInteraction)
+            {
+                //_myRigidBody.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+                _myRigidBody.velocity = Vector2.up * _jumpForce;
+                _whichInteraction = 0;
+            }
+ 
+            _extraJumps--;
+        }
+        else
+        {
+            _coyoteTimer = 0f;
         }
     }
 

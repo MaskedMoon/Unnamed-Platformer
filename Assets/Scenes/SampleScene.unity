@@ -311,7 +311,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 327608215}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 6.06, y: -0.88, z: 0}
+  m_LocalPosition: {x: 2.75, y: -2.78, z: 0}
   m_LocalScale: {x: 3.1414728, y: 0.37796876, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -422,8 +422,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 367538043}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.1211, y: -1.79, z: 0}
-  m_LocalScale: {x: 5.3773923, y: 0.37796876, z: 1}
+  m_LocalPosition: {x: -6.2, y: -3.71, z: 0}
+  m_LocalScale: {x: 2.8231308, y: 0.37796876, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -652,7 +652,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 649799563}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4.497, y: -1.136, z: 0}
+  m_LocalPosition: {x: 1.15, y: 3.06, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -677,12 +677,14 @@ MonoBehaviour:
   _acceleration: 10
   _maxSpeed: 5
   _startRunningSpeed: 0.4
-  _jumpForce: 10
+  _linearDrag: 5
+  _extraJumpCount: 1
+  _jumpForce: 16
   _gravity: 1
   _fallMultiplier: 6
   _linerDragMultiplier: 0.5
+  _coyoteTimerVal: 0.15
   _feetCheckRadius: 0.1
-  _linearDrag: 5
   _feetpos: {fileID: 1732953398}
   _groundLayerMask:
     serializedVersion: 2
@@ -831,7 +833,7 @@ BoxCollider2D:
   m_IsTrigger: 0
   m_UsedByEffector: 0
   m_UsedByComposite: 0
-  m_Offset: {x: -0.000060796738, y: 0.013532609}
+  m_Offset: {x: -0.000060796738, y: -0.006859064}
   m_SpriteTilingProperty:
     border: {x: 0, y: 0, z: 0, w: 0}
     pivot: {x: 0, y: 0}
@@ -842,7 +844,7 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.32482195, y: 0.8077602}
+  m_Size: {x: 0.32482195, y: 0.76697683}
   m_EdgeRadius: 0
 --- !u!1 &1024485015
 GameObject:
