@@ -674,16 +674,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c233e902e470934cba659106b12da49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _acceleration: 10
+  _acceleration: 8
   _maxSpeed: 6
-  _startRunningSpeed: 0.3
+  _startRunningSpeed: 0.2
   _jumpForce: 12
-  _gravity: 2
+  _gravity: 1
   _fallMultiplier: 4
-  _whichInteraction: 0
-  _linerDragMultiplier: 0.1
+  _linerDragMultiplier: 0.5
   _feetCheckRadius: 0.1
-  _linearDrag: 3
+  _linearDrag: 4
   _feetpos: {fileID: 1732953398}
   _groundLayerMask:
     serializedVersion: 2
