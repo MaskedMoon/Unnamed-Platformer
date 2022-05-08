@@ -14,27 +14,30 @@ public class PlayerMovement : MonoBehaviour
     private Vector2 _moveInput;
 
     [Header("Vertical Movement")]
-    [SerializeField] private int _extraJumpCount = 2;
+    [SerializeField] private int _extraJumpCount = 1;
     [SerializeField] private float _jumpForce = 5f;
+    [SerializeField] private float _secondJumpForceMult = 1f;
     [SerializeField] private float _gravity = 1;
     [SerializeField] private float _fallMultiplier = 5f;
-    [SerializeField] private float _linerDragMultiplier = 0.3f;
+    [SerializeField] private float _shortJumpGravityMultiplier = 2.5f;
+    [SerializeField] private float _linerDraginAir = 0.3f;
     [SerializeField] private float _coyoteTimerVal = 0.2f;
 
     private int _extraJumps;
     private float _coyoteTimer;
     private float? _jumpBuffer;
+    private bool? _hasJumped = false;
    
     private int _whichInteraction; //0 == Tap, 1 == Hold
     
     [Header("Collision Detection")]
     [SerializeField] private float _feetCheckRadius;
-    private bool _isGrounded;
 
     [Header("Components")]
     [SerializeField] Transform _feetpos;
     [SerializeField] LayerMask _groundLayerMask;
     private Rigidbody2D _myRigidBody;
+
 
     private void Awake() 
     {
@@ -53,21 +56,27 @@ public class PlayerMovement : MonoBehaviour
     }
     private void Update() 
     {
-        _isGrounded = Physics2D.OverlapCircle(_feetpos.position,_feetCheckRadius,_groundLayerMask);
-//        Debug.Log("Grounded: " + _isGrounded + " | Extra Jumps: " + _extraJumps);
-        if (_isGrounded)
+        //Debug.Log("Checking the _hasJumped value in Update(): " + _hasJumped);
+        //Debug.Log("Is the player Grounded?: " + IsGrounded());
+
+        if (IsGrounded())
         {
-            //_extraJumps = _extraJumpCount;          
+            _extraJumps = _extraJumpCount;          
             _coyoteTimer = _coyoteTimerVal;
+            _hasJumped = false;
+            //Debug.Log("This statement only runs when the player is on ground!");
         }
         else
         {
             _coyoteTimer -= Time.deltaTime;
         }
 
-        
     }
  
+    public bool IsGrounded()
+    {
+        return Physics2D.OverlapCircle(_feetpos.position,_feetCheckRadius,_groundLayerMask);
+    }
     public void GetMoveInput(InputAction.CallbackContext context)
     {
         _moveInput = context.ReadValue<Vector2>();
@@ -114,11 +123,11 @@ public class PlayerMovement : MonoBehaviour
     }
     private void PerformShortJump()
     {
-        _myRigidBody.gravityScale = _gravity * (_fallMultiplier/2);
+        _myRigidBody.gravityScale = _gravity * (_shortJumpGravityMultiplier);
     }
     private void ModifyPhysics()
     {
-        if (_isGrounded)
+        if (IsGrounded())
         {
             AddLinearDrag();
             _myRigidBody.gravityScale = 0;
@@ -126,7 +135,7 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             _myRigidBody.gravityScale = _gravity;
-            _myRigidBody.drag = _linearDrag * _linerDragMultiplier;
+            _myRigidBody.drag = _linerDraginAir;
             if (_myRigidBody.velocity.y < 0)
             {
                 FallWithIncreasedGravity();
@@ -138,7 +147,6 @@ public class PlayerMovement : MonoBehaviour
         }
 
     }
-    
     public void GetJumpInput(InputAction.CallbackContext context)
     {
         
@@ -147,35 +155,34 @@ public class PlayerMovement : MonoBehaviour
             _jumpBuffer = Time.time;
         }
 
-        if (_coyoteTimer > 0f && (Time.time - _jumpBuffer >= 0) && context.performed && _extraJumps > 0)
+        if (_coyoteTimer > 0f && (Time.time - _jumpBuffer >= 0) && context.performed)
         {
-            Debug.Log("First Press: " + _extraJumps);
-            _extraJumps--;
             if(context.interaction is TapInteraction)
             {
                 //_myRigidBody.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
-                _myRigidBody.velocity = Vector2.up * _jumpForce;
+                //_myRigidBody.velocity = new Vector2 (_myRigidBody.velocity.y * _jumpForce, _myRigidBody.velocity.x);
+                _myRigidBody.velocity += new Vector2 (0f, _jumpForce);
                 _whichInteraction = 0;
             }
             else if (context.interaction is HoldInteraction)
             {
                 //.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
-                _myRigidBody.velocity = Vector2.up * _jumpForce;
+                //_myRigidBody.velocity = Vector2.up * _jumpForce;
+                _myRigidBody.velocity += new Vector2 (0f, _jumpForce);
                 _whichInteraction = 1;
             }
             _jumpBuffer = null;
+            _hasJumped = true;
+            //Debug.Log("The Player Has Pressed Jump!: " + _hasJumped);
         }
         else if (_extraJumps > 0 && context.performed)
         {
-            Debug.Log("Second Press: " + _extraJumps);
+            _extraJumps--;
             if(context.interaction is TapInteraction)
             {
-                //_myRigidBody.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
-                _myRigidBody.velocity = Vector2.up * _jumpForce;
+                _myRigidBody.velocity += new Vector2 (0f, _jumpForce*_secondJumpForceMult);
                 _whichInteraction = 0;
             }
- 
-            _extraJumps--;
         }
         else
         {

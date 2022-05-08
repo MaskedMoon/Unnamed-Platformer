@@ -652,7 +652,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 649799563}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.15, y: 3.06, z: 0}
+  m_LocalPosition: {x: 6.24, y: -4.16, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -674,15 +674,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8c233e902e470934cba659106b12da49, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _acceleration: 10
-  _maxSpeed: 5
+  _acceleration: 15
+  _maxSpeed: 7
   _startRunningSpeed: 0.4
   _linearDrag: 5
   _extraJumpCount: 1
-  _jumpForce: 16
+  _jumpForce: 11
+  _secondJumpForceMult: 1
   _gravity: 1
   _fallMultiplier: 6
-  _linerDragMultiplier: 0.5
+  _shortJumpGravityMultiplier: 2.5
+  _linerDraginAir: 1
   _coyoteTimerVal: 0.15
   _feetCheckRadius: 0.1
   _feetpos: {fileID: 1732953398}
