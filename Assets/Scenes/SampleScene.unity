@@ -677,15 +677,18 @@ MonoBehaviour:
   _acceleration: 15
   _maxSpeed: 7
   _startRunningSpeed: 0.4
-  _linearDrag: 5
+  _linearDrag: 11
   _extraJumpCount: 1
   _jumpForce: 11
   _secondJumpForceMult: 1
   _gravity: 1
   _fallMultiplier: 6
-  _shortJumpGravityMultiplier: 2.5
-  _linerDraginAir: 1
-  _coyoteTimerVal: 0.15
+  _shortJumpGravityMultiplier: 3
+  _linerDraginAir: 2
+  _coyoteTimerVal: 0.125
+  _wallJumpBufferValue: 0.3
+  _wallSlideSpeed: 0.3
+  _increaseRayDetectLength: 0.05
   _feetCheckRadius: 0.1
   _feetpos: {fileID: 1732953398}
   _groundLayerMask:
@@ -1313,7 +1316,7 @@ GameObject:
   - component: {fileID: 2048252593}
   - component: {fileID: 2048252592}
   - component: {fileID: 2048252591}
-  m_Layer: 0
+  m_Layer: 6
   m_Name: Wall
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1406,7 +1409,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2048252590}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -6.01, y: 4.32, z: 0}
+  m_LocalPosition: {x: -1.98, y: -2.23, z: 0}
   m_LocalScale: {x: 0.375, y: 4.4875, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

@@ -22,13 +22,21 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float _shortJumpGravityMultiplier = 2.5f;
     [SerializeField] private float _linerDraginAir = 0.3f;
     [SerializeField] private float _coyoteTimerVal = 0.2f;
-
     private int _extraJumps;
     private float _coyoteTimer;
     private float? _jumpBuffer;
     private bool? _hasJumped = false;
-   
     private int _whichInteraction; //0 == Tap, 1 == Hold
+
+
+    [Header("Wall Jump")]
+    [SerializeField] private float _wallJumpBufferValue = 0.2f;
+    [SerializeField] private float _wallSlideSpeed = 0.3f;
+    [SerializeField] private float _increaseRayDetectLength = 0.05f;
+    private bool _isWallSliding = false;
+    private float _wallJumpBuffer;
+    private bool _isHittingWall;
+
     
     [Header("Collision Detection")]
     [SerializeField] private float _feetCheckRadius;
@@ -37,11 +45,13 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] Transform _feetpos;
     [SerializeField] LayerMask _groundLayerMask;
     private Rigidbody2D _myRigidBody;
-
+    private BoxCollider2D _myBoxCollider;
+    
 
     private void Awake() 
     {
         _myRigidBody = GetComponent<Rigidbody2D>();
+        _myBoxCollider = GetComponent<BoxCollider2D>();
     }
 
     private void Start() 
@@ -53,6 +63,7 @@ public class PlayerMovement : MonoBehaviour
     {
         Run(_moveInput.x);
         ModifyPhysics();
+        WallSliding();
     }
     private void Update() 
     {
@@ -121,7 +132,7 @@ public class PlayerMovement : MonoBehaviour
     {
         _myRigidBody.gravityScale = _gravity * _fallMultiplier;
     }
-    private void PerformShortJump()
+    private void SetGravityForShortJump()
     {
         _myRigidBody.gravityScale = _gravity * (_shortJumpGravityMultiplier);
     }
@@ -142,7 +153,7 @@ public class PlayerMovement : MonoBehaviour
             }
             else if (_myRigidBody.velocity.y > 0 && _whichInteraction == 0)
             {
-                PerformShortJump();
+                SetGravityForShortJump();
             }
         }
 
@@ -155,39 +166,82 @@ public class PlayerMovement : MonoBehaviour
             _jumpBuffer = Time.time;
         }
 
-        if (_coyoteTimer > 0f && (Time.time - _jumpBuffer >= 0) && context.performed)
+        if (context.performed)
         {
-            if(context.interaction is TapInteraction)
+            if (_coyoteTimer > 0f && (Time.time - _jumpBuffer >= 0) || _isWallSliding && !_isHittingWall)
             {
-                //_myRigidBody.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
-                //_myRigidBody.velocity = new Vector2 (_myRigidBody.velocity.y * _jumpForce, _myRigidBody.velocity.x);
-                _myRigidBody.velocity += new Vector2 (0f, _jumpForce);
-                _whichInteraction = 0;
+                Debug.Log("Coyote Timer: " + _coyoteTimer + " && Extra Jumps: " + _extraJumps);
+                if(context.interaction is TapInteraction)
+                {
+                    //_myRigidBody.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+                    //_myRigidBody.velocity = new Vector2 (_myRigidBody.velocity.y * _jumpForce, _myRigidBody.velocity.x);
+                    _myRigidBody.velocity += new Vector2 (0f, _jumpForce);
+                    _whichInteraction = 0;
+                }
+                else if (context.interaction is HoldInteraction)
+                {
+                    //.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
+                    //_myRigidBody.velocity = Vector2.up * _jumpForce;
+                    _myRigidBody.velocity += new Vector2 (0f, _jumpForce);
+                    _whichInteraction = 1;
+                }
+                _jumpBuffer = null;
+                _hasJumped = true;
+                //Debug.Log("The Player Has Pressed Jump!: " + _hasJumped);
             }
-            else if (context.interaction is HoldInteraction)
+            else if (_extraJumps > 0 && !_isHittingWall)
+            {   
+                _extraJumps--;
+                Debug.Log("Extra Jumps: " + _extraJumps);
+                if(context.interaction is TapInteraction)
+                {
+                    _myRigidBody.velocity += new Vector2 (0f, _jumpForce*_secondJumpForceMult);
+                    _whichInteraction = 0;
+                }
+            }
+            else
             {
-                //.AddForce(Vector2.up * _jumpForce, ForceMode2D.Impulse);
-                //_myRigidBody.velocity = Vector2.up * _jumpForce;
-                _myRigidBody.velocity += new Vector2 (0f, _jumpForce);
-                _whichInteraction = 1;
+                _coyoteTimer = 0f;
             }
-            _jumpBuffer = null;
-            _hasJumped = true;
-            //Debug.Log("The Player Has Pressed Jump!: " + _hasJumped);
-        }
-        else if (_extraJumps > 0 && context.performed)
+        } 
+    }
+    private void WallSliding()
+    {
+        isPlayerTouchingWalls();
+
+        if (_isHittingWall && !IsGrounded() && _moveInput.x != 0)
         {
-            _extraJumps--;
-            if(context.interaction is TapInteraction)
-            {
-                _myRigidBody.velocity += new Vector2 (0f, _jumpForce*_secondJumpForceMult);
-                _whichInteraction = 0;
-            }
+            _isWallSliding = true;
+            _wallJumpBuffer = Time.time + _wallJumpBufferValue;
         }
-        else
+        else if (_wallJumpBuffer < Time.time)
         {
-            _coyoteTimer = 0f;
+            _isWallSliding = false;
         }
+
+        if (_isWallSliding)
+        {
+            _extraJumps = _extraJumpCount;
+            _myRigidBody.velocity = new Vector2(_myRigidBody.velocity.x, Mathf.Clamp(_myRigidBody.velocity.y,_wallSlideSpeed,float.MaxValue));
+        }
+
+    }
+    private void isPlayerTouchingWalls()
+    {
+        if (_moveInput.x > 0) //Facing Right 
+        {
+            _isHittingWall = CreateRaycastToCheckIfCollidingWithWall(1);
+            //Debug.DrawRay(transform.position, transform.TransformDirection(Vector2.right * 1) * (_myBoxCollider.bounds.extents.x + _increaseRayDetectLength), Color.red);
+        }
+        else if (_moveInput.x < 0) //Facing Left
+        {
+            _isHittingWall = CreateRaycastToCheckIfCollidingWithWall(-1);
+            //Debug.DrawRay(transform.position, transform.TransformDirection(Vector2.right * -1) * (_myBoxCollider.bounds.extents.x + _increaseRayDetectLength),Color.red);
+        }
+    }
+    private bool CreateRaycastToCheckIfCollidingWithWall(int direction)
+    {
+        return Physics2D.Raycast(transform.position, transform.TransformDirection(Vector2.right * direction), _myBoxCollider.bounds.extents.x + _increaseRayDetectLength + 0.05f, _groundLayerMask);
     }
 
 }
