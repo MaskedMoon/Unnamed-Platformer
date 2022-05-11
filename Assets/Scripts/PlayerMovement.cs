@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Interactions;
+using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -25,9 +27,8 @@ public class PlayerMovement : MonoBehaviour
     private int _extraJumps;
     private float _coyoteTimer;
     private float? _jumpBuffer;
-    private bool? _hasJumped = false;
+    private bool? _canExtraJump = false;
     private int _whichInteraction; //0 == Tap, 1 == Hold
-
 
     [Header("Wall Jump")]
     [SerializeField] private float _wallJumpBufferValue = 0.2f;
@@ -37,7 +38,10 @@ public class PlayerMovement : MonoBehaviour
     private float _wallJumpBuffer;
     private bool _isHittingWall;
 
-    
+    [Header("Health")]
+    private bool _isAlive = true;
+    private int _lives = 3;
+
     [Header("Collision Detection")]
     [SerializeField] private float _feetCheckRadius;
 
@@ -46,7 +50,13 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] LayerMask _groundLayerMask;
     private Rigidbody2D _myRigidBody;
     private BoxCollider2D _myBoxCollider;
-    
+   
+    [Header("Health")]
+    [SerializeField] private int _health;
+    [SerializeField] private int _numOfHearts;
+    [SerializeField] private Image[] _hearts;
+    [SerializeField] private Sprite _fulllHeart;
+    [SerializeField] private Sprite _emptyHeart;
 
     private void Awake() 
     {
@@ -61,27 +71,58 @@ public class PlayerMovement : MonoBehaviour
 
     private void FixedUpdate() 
     {
+        if (!_isAlive) 
+        {
+            _myRigidBody.velocity = new Vector2(0f,0f);
+            return;
+        }
         Run(_moveInput.x);
         ModifyPhysics();
         WallSliding();
     }
     private void Update() 
     {
-        //Debug.Log("Checking the _hasJumped value in Update(): " + _hasJumped);
-        //Debug.Log("Is the player Grounded?: " + IsGrounded());
+        if (!_isAlive) {return;}
+
+        if (_health > _numOfHearts)
+        {
+            _health = _numOfHearts;
+        }
+
+        for (int i = 0; i < _hearts.Length; i++)
+        {
+
+            if (i < _health)
+            {
+                _hearts[i].sprite = _fulllHeart;
+            }
+            else
+            {
+                _hearts[i].sprite = _emptyHeart;
+            }
+
+            if (i < _numOfHearts)
+            {
+                _hearts[i].enabled = true;
+            }
+            else
+            {
+                _hearts[i].enabled = false;
+            }
+        }
 
         if (IsGrounded())
         {
             _extraJumps = _extraJumpCount;          
             _coyoteTimer = _coyoteTimerVal;
-            _hasJumped = false;
-            //Debug.Log("This statement only runs when the player is on ground!");
+            _canExtraJump = false;
         }
         else
         {
             _coyoteTimer -= Time.deltaTime;
         }
 
+        LossOfHealth();
     }
  
     public bool IsGrounded()
@@ -90,6 +131,7 @@ public class PlayerMovement : MonoBehaviour
     }
     public void GetMoveInput(InputAction.CallbackContext context)
     {
+        if (!_isAlive) {return;}
         _moveInput = context.ReadValue<Vector2>();
     }
     private void Run(float horizontalMovement)
@@ -160,7 +202,7 @@ public class PlayerMovement : MonoBehaviour
     }
     public void GetJumpInput(InputAction.CallbackContext context)
     {
-        
+        if (!_isAlive) {return;}
         if (context.started)
         {
             _jumpBuffer = Time.time;
@@ -186,8 +228,7 @@ public class PlayerMovement : MonoBehaviour
                     _whichInteraction = 1;
                 }
                 _jumpBuffer = null;
-                _hasJumped = true;
-                //Debug.Log("The Player Has Pressed Jump!: " + _hasJumped);
+                _canExtraJump = true;
             }
             else if (_extraJumps > 0 && !_isHittingWall)
             {   
@@ -243,5 +284,19 @@ public class PlayerMovement : MonoBehaviour
     {
         return Physics2D.Raycast(transform.position, transform.TransformDirection(Vector2.right * direction), _myBoxCollider.bounds.extents.x + _increaseRayDetectLength + 0.05f, _groundLayerMask);
     }
+    private void LossOfHealth()
+    {
+        if (_myBoxCollider.IsTouchingLayers(LayerMask.GetMask("Hazards")))
+        {
+            _lives--;
+            if (_lives == 0) {PlayerDeath();}
+            else {SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);}
+        }
 
+
+    }
+    private void PlayerDeath()
+    {
+        _isAlive = false;
+    }
 }
